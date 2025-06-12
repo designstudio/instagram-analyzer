@@ -1,55 +1,46 @@
 import streamlit as st
 import instaloader
-import pandas as pd
 import re
 
-st.set_page_config(page_title="Instagram Post Analyzer", layout="centered")
-st.title("📊 Analisador de Post do Instagram")
+st.set_page_config(page_title="Análise de Post", layout="centered")
+st.title("📊 Analisador de Performance de Post do Instagram")
 
 def extract_shortcode(url):
     match = re.search(r"instagram\.com/p/([A-Za-z0-9_-]+)/?", url)
     return match.group(1) if match else url
 
-post_input = st.text_input("Cole o link do post ou apenas o shortcode:", "")
+post_input = st.text_input("Cole o link do post ou apenas o shortcode:")
 
 if post_input:
     shortcode = extract_shortcode(post_input)
     try:
-        st.info("🔐 Carregando sessão segura...")
-        L = instaloader.Instaloader()
-        L.load_session_from_file("conta_fake", "secrets/session.txt")
+        st.info("🔍 Buscando dados públicos do post...")
 
-        st.info("📥 Buscando dados do post...")
+        L = instaloader.Instaloader()
         post = instaloader.Post.from_shortcode(L.context, shortcode)
 
-        st.success("✅ Dados coletados com sucesso!")
-        st.markdown(f"**📌 Dono do post:** `{post.owner_username}`")
-        st.markdown(f"**❤️ Curtidas:** `{post.likes}`")
-        st.markdown(f"**💬 Comentários:** `{post.comments}`")
-        st.markdown(f"**👥 Seguidores:** `{post.owner_profile.followers}`")
+        likes = post.likes
+        comments = post.comments
+        followers = post.owner_profile.followers
 
-        comments_data = []
-        for comment in post.get_comments():
-            comments_data.append({
-                "Usuário": comment.owner.username,
-                "Comentário": comment.text,
-                "Data": comment.created_at_utc.strftime("%Y-%m-%d %H:%M:%S")
-            })
+        engagement = ((likes + comments) / followers) * 100 if followers > 0 else 0
 
-        if comments_data:
-            df = pd.DataFrame(comments_data)
-            st.markdown("### 💬 Comentários extraídos:")
-            st.dataframe(df, use_container_width=True)
+        st.success("✅ Dados encontrados com sucesso!")
+        st.markdown(f"**👤 Perfil:** `{post.owner_username}`")
+        st.markdown(f"**❤️ Curtidas:** `{likes}`")
+        st.markdown(f"**💬 Comentários:** `{comments}`")
+        st.markdown(f"**👥 Seguidores:** `{followers}`")
 
-            csv = df.to_csv(index=False).encode('utf-8')
-            st.download_button(
-                label="📥 Baixar CSV",
-                data=csv,
-                file_name=f"comentarios_{shortcode}.csv",
-                mime='text/csv',
-            )
+        st.markdown("---")
+        st.markdown("### 📈 Taxa de Engajamento")
+        st.metric("Engajamento", f"{engagement:.2f}%")
+
+        if engagement >= 5:
+            st.success("🔥 Alto engajamento! Post de destaque.")
+        elif engagement >= 2:
+            st.info("👍 Bom engajamento. Post está performando bem.")
         else:
-            st.warning("Este post não possui comentários.")
+            st.warning("📉 Engajamento baixo. Reavalie conteúdo e timing.")
 
     except Exception as e:
-        st.error(f"❌ Erro ao buscar o post: {str(e)}")
+        st.error(f"❌ Erro ao buscar os dados: {e}")
