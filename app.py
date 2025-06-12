@@ -2,9 +2,10 @@ import streamlit as st
 import instaloader
 import pandas as pd
 import re
+import os
 
 st.set_page_config(page_title="Instagram Post Analyzer", layout="centered")
-st.title("📊 Analisador de Post do Instagram (sem login)")
+st.title("📊 Analisador de Post do Instagram (com login seguro)")
 
 def extract_shortcode(url):
     match = re.search(r"instagram\.com/p/([A-Za-z0-9_-]+)/?", url)
@@ -15,9 +16,12 @@ post_input = st.text_input("Cole o link do post ou o shortcode (ex: DKPS0vitjSq)
 if post_input:
     shortcode = extract_shortcode(post_input)
     try:
-        st.info("🔍 Buscando dados do post (sem login)...")
+        st.info("🔐 Realizando login com conta segura...")
 
         L = instaloader.Instaloader()
+        L.login(st.secrets["IG_USER"], st.secrets["IG_PASS"])
+
+        st.info("📥 Buscando dados do post...")
         post = instaloader.Post.from_shortcode(L.context, shortcode)
 
         st.success("✅ Dados coletados com sucesso!")
