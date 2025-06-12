@@ -4,7 +4,7 @@ import pandas as pd
 import re
 
 st.set_page_config(page_title="Instagram Post Analyzer", layout="centered")
-st.title("📊 Analisador de Post do Instagram")
+st.title("📊 Analisador de Post do Instagram (sem login)")
 
 def extract_shortcode(url):
     match = re.search(r"instagram\.com/p/([A-Za-z0-9_-]+)/?", url)
@@ -47,6 +47,5 @@ if post_input:
             )
         else:
             st.warning("Nenhum comentário disponível.")
-
     except Exception as e:
         st.error(f"❌ Erro: {str(e)}")
